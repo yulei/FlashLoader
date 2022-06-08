@@ -61,6 +61,7 @@
       <file file_name="Setup/Placement.xml" />
     </folder>
     <folder Name="Cube">
+      <file file_name="Cube/Src/stm32f4xx_hal_msp.c" />
       <file file_name="Cube/Inc/stm32f4xx_hal_conf.h" />
       <file file_name="Cube/fl411_hal.c" />
       <file file_name="Cube/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_spi.c" />
