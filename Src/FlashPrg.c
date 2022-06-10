@@ -65,7 +65,7 @@ Purpose : Implementation of RAMCode template
 //
 #define SUPPORT_NATIVE_VERIFY         (0)   // Non-memory mapped flashes only. Flash cannot be read memory-mapped
 #define SUPPORT_NATIVE_READ_FUNCTION  (1)   // Non-memory mapped flashes only. Flash cannot be read memory-mapped
-#define SUPPORT_ERASE_CHIP            (0)   // To potentially speed up production programming: Erases whole flash bank / chip with special command
+#define SUPPORT_ERASE_CHIP            (1)   // To potentially speed up production programming: Erases whole flash bank / chip with special command
 #define SUPPORT_TURBO_MODE            (0)   // Currently available for Cortex-M only
 #define SUPPORT_SEGGER_OPEN_ERASE     (1)   // Flashes with uniform sectors only. Speed up erase because 1 OFL call may erase multiple sectors
 
@@ -207,8 +207,7 @@ int Init(U32 Addr, U32 Freq, U32 Func) {
   //case 3: ... break;
   //default:    break;
   //}
-  fl411_init();
-  return 0;
+  return fl411_init();
 }
 
 /*********************************************************************
@@ -242,6 +241,7 @@ int UnInit(U32 Func) {
   //case 3: ... break;
   //default:    break;
   //}
+  fl411_deinit();
   return 0;
 }
 
@@ -293,7 +293,7 @@ int EraseSector(U32 SectorAddr) {
 *    (2) Use "noinline" attribute to make sure that function is never inlined and label not accidentally removed by linker from ELF file.
 */
 int ProgramPage(U32 DestAddr, U32 NumBytes, U8 *pSrcBuff) {
-  U8*           pSrc;
+  U8*          pSrc;
   U32          PageAddr;
   U32          NumPages;
   U32          NumBytesAtOnce;
@@ -351,14 +351,15 @@ int BlankCheck(U32 Addr, U32 NumBytes, U8 BlankData) {
   if (NumPages) {
     r = 0;
     PageAddr = Addr;
+    NumBytesAtOnce = (1 << PAGE_SIZE_SHIFT);
     do {
-      NumBytesAtOnce = (1 << PAGE_SIZE_SHIFT);
       _FeedWatchdog();
       //
       // Check is empty 
       //
       if (!W25qxx_IsEmptyPage(PageAddr, 0, NumBytesAtOnce) ) {
-        return 1;
+        r = 1;
+        break;
       }
 
       PageAddr += NumBytesAtOnce;
@@ -488,10 +489,8 @@ U32 Verify(U32 Addr, U32 NumBytes, U8 *pBuff) {
 */
 #if SUPPORT_ERASE_CHIP
 int EraseChip(void) {
-  //
-  // Dummy code, needs to be replaced with erase chip code
-  //
-  //_FeedWatchdog();
+  W25qxx_EraseChip();
+  _FeedWatchdog();
   return 0;
 }
 #endif
@@ -519,9 +518,24 @@ int EraseChip(void) {
 */
 #if SUPPORT_NATIVE_READ_FUNCTION
 int SEGGER_OPEN_Read(U32 Addr, U32 NumBytes, U8 *pDestBuff) {
-
+  #if 0
   W25qxx_ReadBytes(pDestBuff, Addr, NumBytes);
-  //
+  #else
+  U32 SrcAddr;
+  U32 NumPages;
+  int r;
+  U8* pCur;
+
+  NumPages = (NumBytes >> PAGE_SIZE_SHIFT);
+  r = 0;
+  pCur = pDestBuff;
+  SrcAddr = Addr;
+  do {
+    W25qxx_ReadPage(pCur, SrcAddr, 0, (1uL << PAGE_SIZE_SHIFT));
+    SrcAddr += (1uL << PAGE_SIZE_SHIFT);
+    pCur += (1uL << PAGE_SIZE_SHIFT);
+  } while (--NumPages);
+  #endif
   _FeedWatchdog();
   return NumBytes;
 }
@@ -563,7 +577,9 @@ int SEGGER_OPEN_Erase(U32 SectorAddr, U32 SectorIndex, U32 NumSectors) {
   _FeedWatchdog();
   r = 0;
   do {
-    r = EraseSector(SectorAddr);
+    //r = EraseSector(SectorAddr);
+    W25qxx_EraseSector(SectorAddr);
+
     if (r) {
       break;
     }

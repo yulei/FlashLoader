@@ -15,6 +15,7 @@
 
 extern SPI_HandleTypeDef hspi1;
 
-void fl411_init(void);
-void fl_udelay(const uint32_t usec);
+int fl411_init(void);
+void fl411_deinit(void);
+
 void fl_mdelay(const uint32_t msec);

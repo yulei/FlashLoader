@@ -120,18 +120,26 @@ int main(void) {
   r = BlankCheck(_FLASH_BASE_ADDR, 0x20000, 0xFF);
   UnInit(0);
 #endif
- for (int i = 0; i < 512; i++) {
-   _acBuffData[i] = 0;
- }
   //
   // Erase sector
   //
   Init(0, 0, 0);
   //r = EraseSector(_FLASH_BASE_ADDR);
   r = SEGGER_OPEN_Read(_FLASH_BASE_ADDR, 512, _acBuffData);
-  if (r != 0) {  // Error?
-    while (1);
+  //if (r != 0) {  // Error?
+  //  while (1);
+  //}
+  UnInit(0);
+
+  for (int i = 0; i < 512; i++) {
+    _acBuffData[i] = 0;
   }
+  Init(0, 0, 0);
+  //r = EraseSector(_FLASH_BASE_ADDR);
+  r = SEGGER_OPEN_Read(_FLASH_BASE_ADDR, 512, _acBuffData);
+  //if (r != 0) {  // Error?
+  //  while (1);
+  //}
   UnInit(0);
   //
   // Program page

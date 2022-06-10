@@ -11,7 +11,8 @@
 #include <stdio.h>
 #endif
 
-#define W25QXX_DUMMY_BYTE 0xA5
+#define W25QXX_DUMMY_BYTE 	0xA5
+#define W25QXX_WAIT			HAL_MAX_DELAY
 
 w25qxx_t w25qxx;
 extern SPI_HandleTypeDef _W25QXX_SPI;
@@ -25,7 +26,7 @@ extern SPI_HandleTypeDef _W25QXX_SPI;
 uint8_t W25qxx_Spi(uint8_t Data)
 {
 	uint8_t ret;
-	HAL_SPI_TransmitReceive(&_W25QXX_SPI, &Data, &ret, 1, 100);
+	HAL_SPI_TransmitReceive(&_W25QXX_SPI, &Data, &ret, 1, W25QXX_WAIT);
 	return ret;
 }
 //###################################################################################################################
